@@ -4,6 +4,7 @@ import os
 import random
 import argparse
 import struct
+import math
 
 def calculate_entropy(data):
     """Calculate Shannon entropy of data"""
@@ -11,12 +12,23 @@ def calculate_entropy(data):
         return 0
     
     entropy = 0
-    for i in range(256):
-        p_i = float(data.count(i))/len(data)
-        if p_i > 0:
-            entropy += - p_i * (p_i if p_i == 0 else p_i * 256).bit_length()
+    byte_counts = {}
     
-    return entropy / 8.0
+    # Count byte frequencies
+    for byte in data:
+        if byte in byte_counts:
+            byte_counts[byte] += 1
+        else:
+            byte_counts[byte] = 1
+    
+    # Calculate entropy
+    data_len = len(data)
+    for count in byte_counts.values():
+        if count > 0:
+            p_i = float(count) / data_len
+            entropy -= p_i * math.log2(p_i)
+    
+    return entropy
 
 def add_garbage_code(data, amount=1024):
     """Add random garbage code sections"""
@@ -77,8 +89,8 @@ def main():
     if args.method in ['strings', 'all']:
         print("[+] Applying string obfuscation...")
         # Simple string obfuscation
-        data = data.replace(b'kernel32', b'\x00'.join(b'kernel32'))
-        data = data.replace(b'ntdll', b'\x00'.join(b'ntdll'))
+        data = data.replace(b'kernel32', b'k\x00e\x00r\x00n\x00e\x00l\x003\x002')
+        data = data.replace(b'KERNEL32', b'K\x00E\x00R\x00N\x00E\x00L\x003\x002')
     
     if args.method in ['bytes', 'all']:
         print("[+] Applying byte substitution...")
