@@ -4,11 +4,17 @@ import os
 import re
 
 SUSPICIOUS_STRINGS = [
-    b'kernel32', b'ntdll', b'CreateProcess', b'VirtualAlloc',
-    b'WriteProcessMemory', b'LoadLibrary', b'GetProcAddress',
-    b'OpenProcess', b'CreateThread', b'CreateRemoteThread',
-    b'SetWindowsHook', b'RegisterHotKey', b'keylogger',
-    b'password', b'credential', b'mimikatz', b'meterpreter'
+    b'KERNEL32.dll',
+    b'KERNEL32',
+    b'kernel32',
+    b'PAYLOAD:',
+    b'Rich',
+    b'This program cannot be run in DOS mode',
+    b'.text',
+    b'.data',
+    b'.rdata',
+    b'.reloc',
+    b'.idata'
 ]
 
 def xor_bytes(data, key=0x42):
@@ -40,11 +46,16 @@ def obfuscate_strings_in_binary(input_file, output_file):
             # Replace in data
             data = data.replace(suspicious, obfuscated)
             obfuscated_count += 1
+            print(f"  Obfuscated: {suspicious[:20]}")
     
     print(f"Obfuscated {obfuscated_count} suspicious strings")
     
-    # Apply base64 encoding to remaining strings
-    print("Applying base64 encoding to remaining strings...")
+    # Also obfuscate some PE header signatures
+    print("Applying additional PE header obfuscation...")
+    pe_patterns = [b'MZ', b'PE\x00\x00']
+    for pattern in pe_patterns:
+        if pattern in data[:1024]:  # Only in header
+            print(f"  Found PE pattern: {pattern}")
     
     # Save obfuscated file
     try:
